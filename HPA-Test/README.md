@@ -17,10 +17,10 @@ Example:
 
 The script will:
 
-1. Deploy the manifests (`deployment.yaml`, `hpa.yaml`, `service.yaml`, `configmap.yaml`).
-2. Run `apache2ctl -k start` inside the pod to start the web server.
-3. Use `ab` (Apache Benchmark) to generate load.
-4. Stream the pod and HPA status with `kubectl get pods -w` and `kubectl get hpa -w`.
+1. Fetch the NodePort and node IP from the cluster.
+2. Display the current HPA status.
+3. Run `ab` (Apache Benchmark) to generate load against the service.
+4. Print instructions for monitoring scale-up and scale-down.
 
 ### Prerequisites
 - `kubectl` configured to talk to a cluster.
