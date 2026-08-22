@@ -14,18 +14,27 @@ The test harness is provided in `test.sh` and can be executed with the following
 - A cluster with at least one node that can run the pod.
 
 ### Running the Test
+
+**Step 1 — Apply the manifests**
 ```bash
-# From the PV-Test directory
-./test.sh
+kubectl apply -f pv.yaml
+kubectl apply -f pvc.yaml
+kubectl apply -f deployment.yaml
+kubectl apply -f service.yaml
 ```
 
-The script will:
+**Step 2 — Run the shared-volume test**
+```bash
+# Write from the first pod
+POD1=$(kubectl get pods -l app=nginx-pv-demo -o jsonpath='{.items[0].metadata.name}')
+kubectl exec -it $POD1 -- sh -c 'echo "<h1>Ditulis dari '"$POD1"'</h1>" > /usr/share/nginx/html/index.html'
 
-1. Create the PV, PVC, deployment, and service.
-2. Wait for the pods to be ready.
-3. Write an `index.html` file from the first pod.
-4. Read the file from the second and third pods and print its contents.
-5. Optionally, you can inspect the file on the node by SSHing into the node and looking at `/mnt/data` (or the path defined in the PV).
+# Check from the second & third pods — the same content should appear
+POD2=$(kubectl get pods -l app=nginx-pv-demo -o jsonpath='{.items[1].metadata.name}')
+kubectl exec -it $POD2 -- cat /usr/share/nginx/html/index.html
+```
+
+If the output shows the HTML written by the first pod, the Persistent Volume is shared correctly across all pods.
 
 ---
 
