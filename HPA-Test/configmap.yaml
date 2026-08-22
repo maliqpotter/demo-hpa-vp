@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: memory-demo-app
+data:
+  server.py: |
+    import http.server
+    import socketserver
+    import time
+
+    PORT = 80
+    HOLD_BYTES = 2 * 1024 * 1024   # tiap request alokasi ~2MB (diperkecil, biar gak gampang OOM)
+    HOLD_SECONDS = 3               # ditahan sebentar biar kelihatan naik saat ab jalan
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            buf = bytearray(HOLD_BYTES)
+            for i in range(0, len(buf), 4096):
+                buf[i] = 1  # sentuh tiap page biar beneran ke-alokasi, bukan cuma virtual
+            time.sleep(HOLD_SECONDS)
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain")
+            self.end_headers()
+            self.wfile.write(b"OK\n")
+            del buf
+
+        def log_message(self, format, *args):
+            pass  # biar log server gak berisik pas di-hit ab
+
+    class Server(socketserver.ThreadingMixIn, http.server.HTTPServer):
+        allow_reuse_address = True
+        daemon_threads = True     # thread lama gak nyangkut pas server restart
+        request_queue_size = 128  # antrian koneksi diperbesar, default cuma 5
+
+    with Server(("", PORT), Handler) as httpd:
+        print(f"Serving on port {PORT}", flush=True)
+        httpd.serve_forever()

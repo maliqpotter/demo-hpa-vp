@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-pv-demo
+  labels:
+    app: nginx-pv-demo
+spec:
+  replicas: 3   # hostPath cuma bisa diakses dari 1 node, jadi replicas 1 aja
+  selector:
+    matchLabels:
+      app: nginx-pv-demo
+  template:
+    metadata:
+      labels:
+        app: nginx-pv-demo
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: html-storage
+              mountPath: /usr/share/nginx/html
+      volumes:
+        - name: html-storage
+          persistentVolumeClaim:
+            claimName: nginx-pvc
